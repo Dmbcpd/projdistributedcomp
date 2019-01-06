@@ -28,20 +28,27 @@ class TopBusiness(MRJob):
         useful = data.get("useful")
         vi = useful + 1
         wi = star*(useful+1)
-        yield bid, vi
-        yield bid,
+        yield bid, (vi, wi, 1)
 
     def reducer_1(self, bid, tup):
-        yield bid, (sum(tup[0]), sum(tup[1]), sum(tup[2]))
+        tup = list(tup)
+        v = 0
+	w = 0
+	ct = 0
+	for el in tup:
+            v+= el[0]
+            w+= el[1]
+            ct+=el[2]
+        yield bid, (v, w, ct)
 
     def reducer_2(self, bid, tup):
-        if tup[2] >= 5:
-            yield bid, tup[1]/tup[0]
+        tup = list(tup)
+        if tup[0][2] >= 5:
+            yield None, (tup[0][1]/tup[0][0], bid)
 
     def reducer_find_top(self, _, scores):
         for score in heapq.nlargest(10, scores):
             yield  score
-
 
 if __name__ == '__main__':
     TopBusiness().run()
