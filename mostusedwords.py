@@ -22,25 +22,35 @@ class MostUsedWords(MRJob):
     # Reads each line in the reviews.json and yields a key pair with the word and 1
     def mapper_words(self, _, line):
         from nltk.tokenize import TweetTokenizer
+        from nltk.corpus import stopwords
+        from string import punctuation
+        stop = set(stopwords.words('english'))
         tknzr = TweetTokenizer()
         line = line.strip()
         data = json.loads(line)
-        # we tokenize the reviews
+        #we tokenize the reviews
         review = tknzr.tokenize(data.get("text"))
-        for word in review:
-            yield word.lower(), 1
+        ct = 0
+	for word in review:
+            print(str(ct))
+            ct+=1
+            word = word.lower()
+            if word not in punctuation and word != "...":
+                if word not in stop:
+                    yield word.lower(), 1
+
     
     # The combiner counts the times (sum) each word has been present in the review.json
     # yields a key pair with the word and the sum 
     def combiner_words(self, word, counts):
-        yield word, sum(counts)
+        yield (word, sum(counts))
 
     # The reducer needs to pass all the data to the final step 
     
     # Notice that the combiner might not have process all the key pairs for the same word
     # that is why the reducer has again the sum
     def reducer_words(self, word, counts):
-        yield word, sum(counts)
+        yield None, (sum(counts), word)
 
     # finds the 25 most used words based on the counts
     def reducer_find_top(self, _, counts):
